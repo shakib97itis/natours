@@ -1,0 +1,30 @@
+{
+  "name": "natours",
+  "version": "1.0.0",
+  "description": "travel application api",
+  "keywords": [
+    "travel",
+    "nodejs",
+    "express",
+    "backend",
+    "api"
+  ],
+  "homepage": "https://github.com/shakib97itis/natours#readme",
+  "bugs": {
+    "url": "https://github.com/shakib97itis/natours/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shakib97itis/natours.git"
+  },
+  "license": "ISC",
+  "author": "Shakibul Islam",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
