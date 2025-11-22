@@ -1,7 +1,7 @@
 const fs = require('fs');
 // reading files temp
 const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
+  fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`),
 );
 
 // Middlewares
@@ -42,7 +42,7 @@ exports.getAllTours = (_req, res) => {
 };
 
 exports.getTour = (req, res) => {
-  const id = req.params.id;
+  const { id } = req.params;
   const tour = tours.find((el) => el.id === id);
   res.status(200).json({
     status: 'success',
@@ -74,7 +74,7 @@ exports.createTour = (req, res) => {
           tour: newTour,
         },
       });
-    }
+    },
   );
 };
 
