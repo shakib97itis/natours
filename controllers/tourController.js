@@ -4,6 +4,7 @@ const tours = JSON.parse(
   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
 );
 
+// Middlewares
 exports.checkId = (req, res, next, val) => {
   const id = parseInt(req.params.id, 10);
   req.params.id = id;
@@ -17,6 +18,16 @@ exports.checkId = (req, res, next, val) => {
     });
   }
 
+  next();
+};
+
+exports.checkBody = (req, res, next) => {
+  if (!req.body.name || !req.body.price) {
+    return res.status(400).json({
+      status: 'fail',
+      message: 'Missing name or price',
+    });
+  }
   next();
 };
 
@@ -47,7 +58,7 @@ exports.createTour = (req, res) => {
   tours.push(newTour);
 
   fs.writeFile(
-    `${__dirname}/dev-data/data/tours-simple.json`,
+    `${__dirname}/../dev-data/data/tours-simple.json`,
     JSON.stringify(tours, null, 2),
     (err) => {
       if (err) {

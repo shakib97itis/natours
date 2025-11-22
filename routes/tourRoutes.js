@@ -5,12 +5,15 @@ const router = express.Router();
 
 router.param('id', tourController.checkId);
 
-// Todo: router.use((req, res))
+router.use((req, res, next) => {
+  console.log('Hello from the tour router middleware!');
+  next();
+});
 
 router
   .route('/')
   .get(tourController.getAllTours)
-  .post(tourController.createTour);
+  .post(tourController.checkBody, tourController.createTour);
 
 router
   .route('/:id')
