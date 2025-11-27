@@ -1,14 +1,3 @@
-// Middlewares
-exports.checkBody = (req, res, next) => {
-  if (!req.body.name || !req.body.price) {
-    return res.status(400).json({
-      status: 'fail',
-      message: 'Missing name or price',
-    });
-  }
-  next();
-};
-
 exports.getAllTours = (_req, res) => {
   res.status(200).json({
     status: 'success',
@@ -25,11 +14,18 @@ exports.getTour = (req, res) => {
   });
 };
 
-exports.createTour = (req, res) => {
-  res.status(201).json({
-    status: 'success',
-    data: {},
-  });
+exports.createTour = async (req, res) => {
+  try {
+    res.status(201).json({
+      status: 'success',
+      data: {},
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'Something went wrong',
+    });
+  }
 };
 
 exports.updateTour = (req, res) => {
