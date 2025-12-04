@@ -37,13 +37,8 @@ exports.getTour = async (req, res) => {
 };
 
 exports.createTour = async (req, res) => {
-  const { name, price, rating } = req.body;
   try {
-    const newTour = await Tour.create({
-      name,
-      price,
-      rating,
-    });
+    const newTour = await Tour.create(req.body);
 
     res.status(201).json({
       status: 'success',
@@ -54,7 +49,7 @@ exports.createTour = async (req, res) => {
   } catch (err) {
     res.status(400).json({
       status: 'fail',
-      message: 'Something went wrong',
+      message: err,
     });
   }
 };
