@@ -21,6 +21,6 @@ router
     validate({ params: tourIdParamsSchema, body: patchTourBodySchema }),
     tourController.updateTour,
   )
-  .delete(tourController.deleteTour);
+  .delete(validate({ params: tourIdParamsSchema }), tourController.deleteTour);
 
 module.exports = router;
