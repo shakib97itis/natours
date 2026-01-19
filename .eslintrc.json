@@ -1,14 +1,17 @@
 {
+  "root": true,
   "env": {
     "node": true,
     "es2021": true
   },
   "extends": [
     "airbnb-base",
-    "plugin:node/recommended",
+    "plugin:n/recommended",
+    "plugin:promise/recommended",
     "plugin:prettier/recommended"
   ],
-  "plugins": ["prettier"],
+  "plugins": ["prettier", "n", "promise"],
+  "ignorePatterns": ["node_modules/", "public/", "dev-data/", "config.env"],
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "script"
@@ -16,16 +19,25 @@
   "rules": {
     "prettier/prettier": "error",
     "spaced-comment": "off",
-    "no-console": "warn",
+    "no-console": "error",
     "consistent-return": "off",
     "func-names": "off",
     "object-shorthand": "off",
-    "no-process-exit": "off",
+    "no-process-exit": "error",
     "no-param-reassign": "off",
     "no-return-await": "off",
-    "no-underscore-dangle": "off",
+    "no-underscore-dangle": ["error", { "allow": ["_id", "__v"] }],
     "class-methods-use-this": "off",
     "prefer-destructuring": ["error", { "object": true, "array": false }],
     "no-unused-vars": ["error", { "argsIgnorePattern": "req|res|next|val" }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["server.js", "config/db.js"],
+      "rules": {
+        "no-console": "off",
+        "no-process-exit": "off"
+      }
+    }
+  ]
 }

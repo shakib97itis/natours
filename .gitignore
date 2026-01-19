@@ -142,3 +142,5 @@ vite.config.ts.timestamp-*
 .vscode/
 dev-data/*
 app_todo.js
+
+/config.env
