@@ -1,5 +1,5 @@
-const { z } = require('zod');
 const mongoose = require('mongoose');
+const { z } = require('zod');
 
 // Optional: enums are better than free strings
 const difficultyEnum = z.enum(['easy', 'medium', 'difficult']);
