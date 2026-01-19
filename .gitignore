@@ -144,3 +144,4 @@ dev-data/*
 app_todo.js
 
 /config.env
+/dev-data
