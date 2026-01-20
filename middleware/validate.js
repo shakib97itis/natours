@@ -48,7 +48,6 @@ function validate(schemas) {
     if (validated.params) req.params = validated.params;
     if (validated.query) req.query = validated.query;
 
-    console.log(validated);
     return next();
   };
 }

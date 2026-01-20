@@ -71,8 +71,25 @@ const patchTourBodySchema = z
   })
   .strict(); // <- rejects unknown keys (prevents updating _id, __v, createdAt, etc.)
 
+const optionalPositiveInt = z.preprocess((val) => {
+  if (val === undefined || val === '') return undefined;
+  if (typeof val === 'string' || typeof val === 'number') return Number(val);
+  return val;
+}, z.number().int().positive().optional());
+
+const tourQuerySchema = z
+  .object({
+    page: optionalPositiveInt.default(1),
+    sort: z.string().optional(),
+    limit: optionalPositiveInt.default(100),
+    difficulty: z.enum(['easy', 'medium', 'difficult']).optional(),
+    duration: optionalPositiveInt,
+  })
+  .strict();
+
 module.exports = {
   tourIdParamsSchema,
+  tourQuerySchema,
   createTourBodySchema,
   patchTourBodySchema,
 };

@@ -2,7 +2,12 @@ const Tour = require('../models/tourModel');
 
 exports.getAllTours = async (req, res) => {
   try {
-    const tours = await Tour.find();
+    const { query } = req.validated;
+    const queryObj = { ...query };
+    ['page', 'sort', 'limit'].forEach((el) => delete queryObj[el]);
+    const queryStr = Tour.find(queryObj);
+
+    const tours = await queryStr;
     res.status(200).json({
       status: 'success',
       results: tours.length,
@@ -120,6 +125,7 @@ exports.updateTour = async (req, res) => {
 exports.deleteTour = async (req, res) => {
   try {
     const { id } = req.validated.params;
+
     await Tour.findByIdAndDelete(id);
     res.status(204).json({
       status: 'success',

@@ -3,15 +3,16 @@ const tourController = require('../controllers/tourController');
 const validate = require('../middleware/validate');
 const {
   tourIdParamsSchema,
+  tourQuerySchema,
   createTourBodySchema,
   patchTourBodySchema,
-} = require('../validation/tourValidation');
+} = require('../validators/tourValidation');
 
 const router = express.Router();
 
 router
   .route('/')
-  .get(tourController.getAllTours)
+  .get(validate({ query: tourQuerySchema }), tourController.getAllTours)
   .post(validate({ body: createTourBodySchema }), tourController.createTour);
 
 router
