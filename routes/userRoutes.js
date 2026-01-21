@@ -1,6 +1,9 @@
 const express = require('express');
 const userController = require('../controllers/userController');
 
+/**
+ * User routes (currently stubbed in user controller).
+ */
 const router = express.Router();
 
 router

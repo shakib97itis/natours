@@ -1,4 +1,8 @@
+/* eslint-disable n/no-process-exit */
 /* eslint-disable no-console */
+/**
+ * Application entry point: load env, connect DB, start server, handle shutdown.
+ */
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');

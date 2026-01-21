@@ -1,6 +1,9 @@
 /* eslint-disable no-console */
 const mongoose = require('mongoose');
 
+/**
+ * Connect to MongoDB using the MONGODB_URI env var and wire event logging.
+ */
 async function connectDB() {
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error('MONGODB_URI is missing in environment variables');

@@ -8,6 +8,9 @@ const {
   patchTourBodySchema,
 } = require('../validators/tourValidation');
 
+/**
+ * Tour routes with request validation.
+ */
 const router = express.Router();
 
 router

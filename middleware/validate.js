@@ -1,3 +1,6 @@
+/**
+ * Normalize Zod issues into a simpler shape for API responses.
+ */
 function formatZodError(err) {
   // err.issues => [{ path, message, code, ... }]
   return err.issues.map((i) => ({
