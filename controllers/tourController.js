@@ -1,11 +1,33 @@
 const Tour = require('../models/tourModel');
 
+// List tours with filtering and sorting from validated query params.
 exports.getAllTours = async (req, res) => {
   try {
-    const { query } = req.validated;
-    const queryObj = { ...query };
+    const queryObj = { ...req.validated.query };
     ['page', 'sort', 'limit'].forEach((el) => delete queryObj[el]);
+
+    const opMap = { gte: '$gte', gt: '$gt', lte: '$lte', lt: '$lt' };
+    const convertRange = (field) => {
+      const value = queryObj[field];
+      if (!value || typeof value !== 'object') return;
+      const converted = {};
+      Object.entries(value).forEach(([key, val]) => {
+        const mapped = opMap[key];
+        if (mapped && val !== undefined) converted[mapped] = val;
+      });
+      queryObj[field] = converted;
+    };
+    convertRange('duration');
+    convertRange('price');
+
+    // Sorting
     const queryStr = Tour.find(queryObj);
+    const defaultSortFields = ['price', '-ratingsAverage', 'duration'];
+    const sortFields = req.validated.query.sort ?? defaultSortFields;
+    const normalizedSortFields = Array.isArray(sortFields)
+      ? sortFields
+      : [sortFields];
+    queryStr.sort(normalizedSortFields.join(' '));
 
     const tours = await queryStr;
     res.status(200).json({
@@ -24,6 +46,7 @@ exports.getAllTours = async (req, res) => {
   }
 };
 
+// Fetch a single tour by id.
 exports.getTour = async (req, res) => {
   const { id } = req.validated.params;
 
@@ -43,6 +66,7 @@ exports.getTour = async (req, res) => {
   }
 };
 
+// Create a tour from validated request body.
 exports.createTour = async (req, res) => {
   try {
     const { body } = req.validated;
@@ -62,7 +86,7 @@ exports.createTour = async (req, res) => {
   }
 };
 
-// helper to return same error shape as your validate middleware
+// Return the same error shape as the validate middleware.
 function validation400(res, inPart, field, message) {
   return res.status(400).json({
     message: 'Validation failed',
@@ -75,6 +99,7 @@ function validation400(res, inPart, field, message) {
   });
 }
 
+// Partially update a tour with DB-aware validation.
 exports.updateTour = async (req, res) => {
   try {
     const { id } = req.validated.params;
@@ -122,6 +147,7 @@ exports.updateTour = async (req, res) => {
   }
 };
 
+// Delete a tour by id.
 exports.deleteTour = async (req, res) => {
   try {
     const { id } = req.validated.params;
