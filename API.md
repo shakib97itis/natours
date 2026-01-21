@@ -33,15 +33,15 @@ Other errors use:
 
 ### GET `/tours`
 
-List all tours. Supports filtering and sorting.
+List all tours. Supports filtering, sorting, field selection, and pagination.
 
 Query parameters:
 
-- `page` (number, optional, default `1`) - validated but not used for pagination yet.
-- `limit` (number, optional, default `100`) - validated but not used for pagination yet.
+- `page` (number, optional, default `1`) - page number for pagination.
+- `limit` (number, optional, default `10`) - page size for pagination.
 - `sort` (string, optional) - comma-separated `field:direction` pairs. Allowed fields: `price`, `ratingsAverage`, `duration`. Direction must be `asc` or `desc` (case-insensitive).
   - Example: `sort=ratingsAverage:desc,price:asc`
-  - If omitted, default sort is `price:asc,duration:asc,ratingsAverage:desc`.
+  - If omitted, default sort is `price:asc,ratingsAverage:desc`.
   - The `sort` parameter must be provided once and cannot contain duplicate fields.
 - `fields` (string, optional) - comma-separated projection list. Supports include (`name,duration`) or exclude (`-price,-priceDiscount`) but cannot mix include and exclude values. `_id` is always included and `__v` is always excluded; neither is allowed in `fields`.
 - `difficulty` (string, optional) - `easy | medium | difficult`.
@@ -58,6 +58,7 @@ Response: `200`
 {
   "status": "success",
   "results": 2,
+  "page": 1,
   "data": {
     "tours": []
   }
@@ -87,7 +88,7 @@ Body (required fields noted):
 
 Business rule:
 
-- `priceDiscount` must be less than `price`.
+- `priceDiscount` cannot be greater than `price`.
 
 Response: `201`
 

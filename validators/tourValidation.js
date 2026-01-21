@@ -28,62 +28,79 @@ const coerceOptionalNumber = (schema) =>
     return val;
   }, schema.optional());
 
-const createTourBodySchema = z
-  .object({
-    name: z.string().min(1, 'A tour must have a name').trim(),
-    duration: z.number().positive('A tour must have a duration'),
-    maxGroupSize: z.number().int().positive('A tour must have a group size'),
-    difficulty: difficultyEnum,
-    ratingsAverage: z.number().min(1).max(5).optional().default(4.5),
-    ratingsQuantity: z.number().int().min(0).optional().default(0),
-    price: z.number().positive('A tour must have a price'),
-    priceDiscount: z.number().min(0).optional().default(0),
-    summary: z.string().min(1, 'A tour must have a summary').trim(),
-    description: z.string().trim().optional(),
-    imageCover: z.string().min(1, 'A tour must have a cover image'),
-    images: z.array(z.string()).optional().default([]),
-    createdAt: dateFromString.optional(), // you can also omit this entirely
-    startDates: z.array(dateFromString).optional().default([]),
-  })
-  .strict()
-  .superRefine((data, ctx) => {
+const withPriceDiscountValidation = (schema) =>
+  schema.superRefine((data, ctx) => {
     // Match a common Mongoose rule: discount must be < price
-    if (data.priceDiscount != null && data.priceDiscount >= data.price) {
+    if (data.priceDiscount != null && data.priceDiscount > data.price) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['priceDiscount'],
-        message: 'Discount price should be less than regular price',
+        message: 'Discount price cannot be greater than regular price',
       });
     }
   });
 
+const requiredNonEmptyString = (message) => z.string().min(1, message).trim();
+const optionalBoundedString = (min, max) =>
+  z.string().trim().min(min).max(max).optional();
+// const optionalNonEmptyString = () => z.string().trim().min(1).optional();
+
+const startDatesSchema = z.array(dateFromString);
+const objectIdSchema = z
+  .string()
+  .trim()
+  .refine(mongoose.Types.ObjectId.isValid, { message: 'Invalid tourId' });
+
+const createTourBodySchema = withPriceDiscountValidation(
+  z
+    .object({
+      name: requiredNonEmptyString('A tour must have a name'),
+      duration: z.coerce.number().positive('A tour must have a duration'),
+      maxGroupSize: z.coerce
+        .number()
+        .int()
+        .positive('A tour must have a group size'),
+      difficulty: difficultyEnum,
+      ratingsAverage: z.coerce.number().min(0).max(5).optional().default(4.5),
+      ratingsQuantity: z.coerce.number().int().min(0).optional().default(0),
+      price: z.coerce.number().nonnegative('A tour must have a price'),
+      priceDiscount: z.coerce.number().nonnegative().optional().default(0),
+      summary: requiredNonEmptyString('A tour must have a summary'),
+      description: z.string().trim().optional(),
+      imageCover: z.string().min(1, 'A tour must have a cover image'),
+      images: z.array(z.string()).optional().default([]),
+      createdAt: dateFromString.optional(), // you can also omit this entirely
+      startDates: startDatesSchema.optional().default([]),
+    })
+    .strict(),
+);
+
 const tourIdParamsSchema = z.object({
-  id: z
-    .string()
-    .trim()
-    .refine(mongoose.Types.ObjectId.isValid, { message: 'Invalid tourId' }),
+  id: objectIdSchema,
 });
 
-const patchTourBodySchema = z
-  .object({
-    name: z.string().min(1).max(100).optional(),
-    duration: z.coerce.number().int().positive().optional(),
-    maxGroupSize: z.coerce.number().int().positive().optional(),
-    difficulty: difficultyEnum.optional(),
+const patchTourBodySchema = withPriceDiscountValidation(
+  z
+    .object({
+      name: optionalBoundedString(1, 100),
+      duration: z.coerce.number().int().positive().optional(),
+      maxGroupSize: z.coerce.number().int().positive().optional(),
+      difficulty: difficultyEnum.optional(),
 
-    price: z.coerce.number().nonnegative().optional(),
-    priceDiscount: z.coerce.number().nonnegative().optional(),
+      price: z.coerce.number().nonnegative().optional(),
+      priceDiscount: z.coerce.number().nonnegative().optional(),
 
-    summary: z.string().max(500).optional(),
-    description: z.string().max(5000).optional(),
+      summary: optionalBoundedString(1, 500),
+      description: optionalBoundedString(1, 5000),
 
-    imageCover: z.string().min(1).optional(),
-    images: z.array(z.string().min(1)).optional(),
+      imageCover: z.httpUrl().trim(),
+      images: z.array(z.httpUrl().trim()).optional(),
 
-    // If you allow updating startDates, accept ISO strings (recommended for APIs)
-    startDates: z.array(z.coerce.date()).optional(),
-  })
-  .strict(); // <- rejects unknown keys (prevents updating _id, __v, createdAt, etc.)
+      // If you allow updating startDates, accept ISO strings (recommended for APIs)
+      startDates: startDatesSchema.optional(),
+    })
+    .strict(), // <- rejects unknown keys (prevents updating _id, __v, createdAt, etc.)
+);
 
 const optionalPositiveInt = coerceOptionalNumber(z.number().int().positive());
 const optionalPositiveNumber = coerceOptionalNumber(z.number().positive());
@@ -136,14 +153,17 @@ const priceRangeSchema = buildRangeSchema(optionalPositiveNumber, 'Price');
 
 const allowedSortFields = ['price', 'ratingsAverage', 'duration'];
 const allowedSortDirections = ['asc', 'desc'];
-const sortSchema = z
-  .string({
-    invalid_type_error: 'Sort must be a single query parameter',
-    required_error: 'Sort must be a single query parameter',
-  })
-  .trim()
-  .min(1, 'Sort must be a non-empty string')
-  .transform((val) => val.split(',').map((part) => part.trim()))
+const commaListSchema = (label) =>
+  z
+    .string({
+      invalid_type_error: `${label} must be a single query parameter`,
+      required_error: `${label} must be a single query parameter`,
+    })
+    .trim()
+    .min(1, `${label} must be a non-empty string`)
+    .transform((val) => val.split(',').map((part) => part.trim()));
+
+const sortSchema = commaListSchema('Sort')
   .superRefine((fields, ctx) => {
     const seenFields = new Set();
     fields.forEach((field, index) => {
@@ -222,14 +242,7 @@ const allowedSelectFields = [
   'startDates',
 ];
 
-const fieldsSchema = z
-  .string({
-    invalid_type_error: 'Fields must be a single query parameter',
-    required_error: 'Fields must be a single query parameter',
-  })
-  .trim()
-  .min(1, 'Fields must be a non-empty string')
-  .transform((val) => val.split(',').map((part) => part.trim()))
+const fieldsSchema = commaListSchema('Fields')
   .superRefine((fields, ctx) => {
     const seenFields = new Set();
     let hasInclude = false;
@@ -303,9 +316,9 @@ const fieldsSchema = z
 const tourQuerySchema = z
   .object({
     page: optionalPositiveInt.default(1),
+    limit: optionalPositiveInt.default(10),
     sort: sortSchema.optional(),
     fields: fieldsSchema.optional(),
-    limit: optionalPositiveInt.default(100),
     difficulty: difficultyEnum.optional(),
     duration: z.union([optionalPositiveInt, durationRangeSchema]).optional(),
     price: z.union([optionalPositiveNumber, priceRangeSchema]).optional(),

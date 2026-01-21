@@ -11,8 +11,11 @@ const Tour = require('../models/tourModel');
 exports.getAllTours = async (req, res) => {
   try {
     const queryObj = { ...req.validated.query };
+
+    // Remove unneeded query params
     ['page', 'sort', 'limit', 'fields'].forEach((el) => delete queryObj[el]);
 
+    // Advanced filtering
     const opMap = { gte: '$gte', gt: '$gt', lte: '$lte', lt: '$lt' };
     const convertRange = (field) => {
       const value = queryObj[field];
@@ -29,23 +32,35 @@ exports.getAllTours = async (req, res) => {
 
     // Sorting
     const queryStr = Tour.find(queryObj);
-    const defaultSortFields = ['price', '-ratingsAverage', 'duration'];
+    const defaultSortFields = ['price', '-ratingsAverage'];
     const sortFields = req.validated.query.sort ?? defaultSortFields;
     const normalizedSortFields = Array.isArray(sortFields)
       ? sortFields
       : [sortFields];
     queryStr.sort(normalizedSortFields.join(' '));
 
+    // field limiting
     const selectFields = req.validated.query.fields;
     if (selectFields) {
       queryStr.select(selectFields);
     }
 
+    // Pagination
+    const { page, limit } = req.validated.query;
+    const skip = (page - 1) * limit;
+    queryStr.skip(skip).limit(limit);
+
+    if (page) {
+      const numTours = await Tour.countDocuments();
+      if (skip >= numTours) throw new Error('This page does not exist');
+    }
+    // Query
     const tours = await queryStr;
+
     res.status(200).json({
       status: 'success',
       results: tours.length,
-      requestedAt: req.requestTime,
+      page,
       data: {
         tours,
       },
@@ -66,6 +81,10 @@ exports.getTour = async (req, res) => {
 
   try {
     const tour = await Tour.findById(id);
+    if (!tour) {
+      throw new Error('Tour not found');
+    }
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -75,7 +94,7 @@ exports.getTour = async (req, res) => {
   } catch (err) {
     res.status(404).json({
       status: 'fail',
-      message: 'Something went wrong',
+      message: err.message,
     });
   }
 };
@@ -128,7 +147,7 @@ exports.updateTour = async (req, res) => {
     // Load existing doc (PATCH needs DB-aware validation for cross-field rules)
     const existing = await Tour.findById(id);
     if (!existing) {
-      return res.status(400).json({
+      return res.status(404).json({
         status: 'fail',
         message: 'Tour not found',
       });
@@ -174,7 +193,13 @@ exports.deleteTour = async (req, res) => {
   try {
     const { id } = req.validated.params;
 
-    await Tour.findByIdAndDelete(id);
+    const deleted = await Tour.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Tour not found',
+      });
+    }
     res.status(204).json({
       status: 'success',
       data: null,
