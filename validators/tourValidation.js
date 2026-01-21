@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 const { z } = require('zod');
 
+/**
+ * Zod schemas for validating tour params, query strings, and request bodies.
+ */
+
 // Enums keep validation consistent across request types.
 const difficultyEnum = z.enum(['easy', 'medium', 'difficult']);
 
@@ -14,6 +18,9 @@ const dateFromString = z.preprocess((val) => {
   return val;
 }, z.date());
 
+/**
+ * Coerce optional numeric values from strings while preserving undefined.
+ */
 const coerceOptionalNumber = (schema) =>
   z.preprocess((val) => {
     if (val === undefined || val === '') return undefined;
@@ -81,6 +88,9 @@ const patchTourBodySchema = z
 const optionalPositiveInt = coerceOptionalNumber(z.number().int().positive());
 const optionalPositiveNumber = coerceOptionalNumber(z.number().positive());
 
+/**
+ * Build a range schema with optional bounds and validation between them.
+ */
 function buildRangeSchema(baseSchema, label) {
   return z
     .object({
@@ -195,10 +205,106 @@ const sortSchema = z
     }),
   );
 
+const allowedSelectFields = [
+  'name',
+  'duration',
+  'maxGroupSize',
+  'difficulty',
+  'ratingsAverage',
+  'ratingsQuantity',
+  'price',
+  'priceDiscount',
+  'summary',
+  'description',
+  'imageCover',
+  'images',
+  'createdAt',
+  'startDates',
+];
+
+const fieldsSchema = z
+  .string({
+    invalid_type_error: 'Fields must be a single query parameter',
+    required_error: 'Fields must be a single query parameter',
+  })
+  .trim()
+  .min(1, 'Fields must be a non-empty string')
+  .transform((val) => val.split(',').map((part) => part.trim()))
+  .superRefine((fields, ctx) => {
+    const seenFields = new Set();
+    let hasInclude = false;
+    let hasExclude = false;
+
+    fields.forEach((field, index) => {
+      if (!field) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index],
+          message: 'Fields must not contain empty values',
+        });
+        return;
+      }
+
+      const isExclude = field.startsWith('-');
+      const rawName = isExclude ? field.slice(1) : field;
+      if (!rawName) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index],
+          message: 'Fields must not contain empty values',
+        });
+        return;
+      }
+
+      if (rawName === '_id' || rawName === '__v') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index],
+          message: `Field "${rawName}" cannot be requested`,
+        });
+        return;
+      }
+
+      if (!allowedSelectFields.includes(rawName)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index],
+          message: `Fields must be one of: ${allowedSelectFields.join(', ')}`,
+        });
+        return;
+      }
+
+      if (seenFields.has(rawName)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index],
+          message: `Field "${rawName}" is duplicated`,
+        });
+        return;
+      }
+      seenFields.add(rawName);
+
+      if (isExclude) {
+        hasExclude = true;
+      } else if (!isExclude) {
+        hasInclude = true;
+      }
+    });
+
+    if (hasInclude && hasExclude) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Fields cannot mix include and exclude values',
+      });
+    }
+  })
+  .transform((fields) => fields.join(' '));
+
 const tourQuerySchema = z
   .object({
     page: optionalPositiveInt.default(1),
     sort: sortSchema.optional(),
+    fields: fieldsSchema.optional(),
     limit: optionalPositiveInt.default(100),
     difficulty: difficultyEnum.optional(),
     duration: z.union([optionalPositiveInt, durationRangeSchema]).optional(),

@@ -43,6 +43,7 @@ Query parameters:
   - Example: `sort=ratingsAverage:desc,price:asc`
   - If omitted, default sort is `price:asc,duration:asc,ratingsAverage:desc`.
   - The `sort` parameter must be provided once and cannot contain duplicate fields.
+- `fields` (string, optional) - comma-separated projection list. Supports include (`name,duration`) or exclude (`-price,-priceDiscount`) but cannot mix include and exclude values. `_id` is always included and `__v` is always excluded; neither is allowed in `fields`.
 - `difficulty` (string, optional) - `easy | medium | difficult`.
 - `duration` (number or range object, optional):
   - Exact: `duration=5`
