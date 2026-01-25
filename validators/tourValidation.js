@@ -5,6 +5,8 @@ const { z } = require('zod');
  * Zod schemas for validating tour params, query strings, and request bodies.
  */
 
+const emptyStrict = z.object({}).strict();
+
 // Enums keep validation consistent across request types.
 const difficultyEnum = z.enum(['easy', 'medium', 'difficult']);
 
@@ -330,4 +332,5 @@ module.exports = {
   tourQuerySchema,
   createTourBodySchema,
   patchTourBodySchema,
+  emptyStrict,
 };

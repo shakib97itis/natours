@@ -6,12 +6,21 @@ const {
   tourQuerySchema,
   createTourBodySchema,
   patchTourBodySchema,
+  emptyStrict,
 } = require('../validators/tourValidation');
 
 /**
  * Tour routes with request validation.
  */
 const router = express.Router();
+
+router
+  .route('/top-5')
+  .get(
+    validate({ query: emptyStrict }),
+    tourController.aliasTopTours,
+    tourController.getAllTours,
+  );
 
 router
   .route('/')

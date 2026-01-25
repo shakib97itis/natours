@@ -8,6 +8,14 @@ const Tour = require('../models/tourModel');
 /**
  * List tours using validated query params for filters, sorting, and field selection.
  */
+
+exports.aliasTopTours = (req, res, next) => {
+  req.validated.query.limit = 5;
+  req.validated.query.sort = ['-ratingsAverage', 'price'];
+  req.validated.query.fields = 'name price ratingsAverage summary difficulty';
+  next();
+};
+
 exports.getAllTours = async (req, res) => {
   try {
     const queryObj = { ...req.validated.query };
