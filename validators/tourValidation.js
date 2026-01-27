@@ -81,6 +81,16 @@ const tourIdParamsSchema = z.object({
   id: objectIdSchema,
 });
 
+const monthlyPlanParamsSchema = z
+  .object({
+    year: z.coerce
+      .number()
+      .int()
+      .min(1000, 'Year must be a valid 4-digit year')
+      .max(9999, 'Year must be a valid 4-digit year'),
+  })
+  .strict();
+
 const patchTourBodySchema = withPriceDiscountValidation(
   z
     .object({
@@ -329,6 +339,7 @@ const tourQuerySchema = z
 
 module.exports = {
   tourIdParamsSchema,
+  monthlyPlanParamsSchema,
   tourQuerySchema,
   createTourBodySchema,
   patchTourBodySchema,

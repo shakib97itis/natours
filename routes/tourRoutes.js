@@ -7,6 +7,7 @@ const {
   createTourBodySchema,
   patchTourBodySchema,
   emptyStrict,
+  monthlyPlanParamsSchema,
 } = require('../validators/tourValidation');
 
 /**
@@ -20,6 +21,13 @@ router
     validate({ query: emptyStrict }),
     tourController.aliasTopTours,
     tourController.getAllTours,
+  );
+
+router
+  .route('/monthly-plan/:year')
+  .get(
+    validate({ params: monthlyPlanParamsSchema }),
+    tourController.getMonthlyPlan,
   );
 
 router.route('/stats').get(tourController.getTourStats);
