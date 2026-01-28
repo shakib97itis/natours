@@ -73,6 +73,7 @@ const createTourBodySchema = withPriceDiscountValidation(
       images: z.array(z.string()).optional().default([]),
       createdAt: dateFromString.optional(), // you can also omit this entirely
       startDates: startDatesSchema.optional().default([]),
+      secretTour: z.boolean().optional().default(false),
     })
     .strict(),
 );
