@@ -49,3 +49,13 @@ async function gracefulShutdown(signal) {
 
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
+
+process.on('unhandledRejection', (e) => {
+  console.error(e);
+  gracefulShutdown('unhandledRejection');
+});
+
+process.on('uncaughtException', (e) => {
+  console.error(e);
+  gracefulShutdown('uncaughtException');
+});

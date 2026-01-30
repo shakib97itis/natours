@@ -1,3 +1,5 @@
+const AppError = require('../utils/appError');
+
 /**
  * Normalize Zod issues into a simpler shape for API responses.
  */
@@ -37,10 +39,11 @@ function validate(schemas) {
     });
 
     if (errors.length) {
-      return res.status(400).json({
-        message: 'Validation failed',
-        errors,
-      });
+      // return res.status(400).json({
+      //   message: 'Validation failed is here',
+      //   errors,
+      // });
+      return next(new AppError('Validation failed', 400, { errors }));
     }
 
     // Best practice: use validated data downstream
