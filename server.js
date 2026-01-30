@@ -3,6 +3,11 @@
 /**
  * Application entry point: load env, connect DB, start server, handle shutdown.
  */
+process.on('uncaughtException', (e) => {
+  console.error(e);
+  process.exit(1);
+});
+
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
@@ -53,9 +58,4 @@ process.on('SIGTERM', gracefulShutdown);
 process.on('unhandledRejection', (e) => {
   console.error(e);
   gracefulShutdown('unhandledRejection');
-});
-
-process.on('uncaughtException', (e) => {
-  console.error(e);
-  gracefulShutdown('uncaughtException');
 });
