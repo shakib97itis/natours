@@ -1,5 +1,7 @@
 const express = require('express');
 const tourController = require('../controllers/tourController');
+const authController = require('../controllers/authController');
+
 const validate = require('../middleware/validate');
 const {
   tourIdParamsSchema,
@@ -34,7 +36,11 @@ router.route('/stats').get(tourController.getTourStats);
 
 router
   .route('/')
-  .get(validate({ query: tourQuerySchema }), tourController.getAllTours)
+  .get(
+    validate({ query: tourQuerySchema }),
+    authController.protect,
+    tourController.getAllTours,
+  )
   .post(validate({ body: createTourBodySchema }), tourController.createTour);
 
 router
@@ -42,8 +48,15 @@ router
   .get(validate({ params: tourIdParamsSchema }), tourController.getTour)
   .patch(
     validate({ params: tourIdParamsSchema, body: patchTourBodySchema }),
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
     tourController.updateTour,
   )
-  .delete(validate({ params: tourIdParamsSchema }), tourController.deleteTour);
+  .delete(
+    validate({ params: tourIdParamsSchema }),
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.deleteTour,
+  );
 
 module.exports = router;
