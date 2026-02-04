@@ -12,10 +12,27 @@ router.post('/login', authController.login);
 
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
+router.patch(
+  '/updatePassword',
+  authController.protect,
+  authController.updatePassword,
+);
+
+router.patch(
+  '/updateMyProfile',
+  authController.protect,
+  userController.updateMyProfile,
+);
+
+router.delete(
+  '/deleteMyProfile',
+  authController.protect,
+  userController.deleteMe,
+);
 
 router
   .route('/')
-  .get(userController.getAllUsers)
+  .get(authController.protect, userController.getAllUsers)
   .post(userController.createUser);
 
 router
