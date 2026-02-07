@@ -2,6 +2,8 @@ const express = require('express');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const hpp = require('hpp');
 
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -30,8 +32,25 @@ const limiter = rateLimit({
 
 app.use('/api', limiter);
 
-// Middleware
-app.use(express.json());
+// Body parser
+app.use(express.json({ limit: '10kb' }));
+app.use(mongoSanitize());
+
+// HTTP Parameter Pollution
+app.use(
+  hpp({
+    whitelist: [
+      'duration',
+      'ratingsQuantity',
+      'ratingsAverage',
+      'maxGroupSize',
+      'difficulty',
+      'price',
+    ],
+  }),
+);
+
+// Serving static files
 app.use(express.static(`${__dirname}/public`));
 
 // Routes
