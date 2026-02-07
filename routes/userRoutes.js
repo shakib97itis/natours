@@ -27,7 +27,7 @@ router.patch(
 router.delete(
   '/deleteMyProfile',
   authController.protect,
-  userController.deleteMe,
+  userController.deleteMyProfile,
 );
 
 router
